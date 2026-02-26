@@ -1,0 +1,181 @@
+# -------------------------- Q1 --------------------------
+-- ALTER TABLE order_items ADD COLUMN current_price DECIMAL (10, 2) NOT NULL DEFAULT 0.00;
+-- UPDATE order_items oi
+-- JOIN products p ON oi.product_id = p.id
+-- SET oi.current_price = oi.quantity * p.current_price;
+# -------------------------- Q2 --------------------------
+-- SELECT
+--   u.id,
+--   u.username,
+--   oi.current_price AS total_pay
+-- FROM
+--   order_items oi
+--   JOIN orders o ON o.id = oi.order_id
+--   JOIN users u ON u.id = o.user_id
+-- WHERE
+--   o.order_date >= '2026-01-01'
+--   AND o.order_date < '2026-02-01'
+--   AND o.`status` = 'completed'
+-- ORDER BY
+--   total_pay DESC
+--   LIMIT 5;
+# -------------------------- Q3 --------------------------
+-- SELECT
+--   u.id,
+--   u.full_name,
+--   count(c.id) AS comment_count
+-- FROM
+--   users u
+--   JOIN comments c ON c.user_id = u.id
+-- WHERE
+--   c.created_at >= '2026-01-01'
+--   AND c.created_at < '2026-02-01'
+-- GROUP BY
+--   u.id
+-- ORDER BY
+--   comment_count DESC
+--   LIMIT 5;
+# -------------------------- Q4 --------------------------
+-- SELECT
+--   p.id,
+--   p.`name`,
+--   p.current_price,
+--   count(c.id) AS comment_count
+-- FROM
+--   products p
+--   LEFT JOIN comments c ON c.product_id = p.id
+-- GROUP BY
+--   p.id
+-- ORDER BY
+--   comment_count DESC;
+# -------------------------- Q5 --------------------------
+-- SELECT
+--   u.id,
+--   u.full_name,
+--   sum(oi.total_purchase) AS total_spend,
+--   (
+--     SELECT
+--       avg(total_purchase)
+--     FROM
+--       users u2
+--       JOIN orders o2 ON o2.user_id = u2.id
+--       JOIN order_items oi2 ON oi2.order_id = o2.id
+--   ) AS avg_spend
+-- FROM
+--   users u
+--   JOIN orders o ON o.user_id = u.id
+--   JOIN order_items oi ON oi.order_id = o.id
+-- WHERE
+--   o.order_date >= '2026-01-01'
+--   AND o.order_date < '2026-02-01'
+--   AND o.`status` = 'completed'
+-- GROUP BY
+--   u.id,
+--   u.full_name
+-- HAVING
+--   total_spend > avg_spend;
+# -------------------------- Q6 --------------------------
+-- SELECT
+--   *
+-- FROM
+--   (
+--     SELECT
+--       p.category,
+--       p.`name`,
+--       sum(oi.quantity) AS total_quantity,
+--       RANK() over (PARTITION BY p.category ORDER BY sum(oi.quantity) DESC) AS ranked
+--     FROM
+--       products p
+--       JOIN order_items oi ON oi.product_id = p.id
+--     GROUP BY
+--       p.category,
+--       p.`name`
+--   ) AS ranked
+-- WHERE
+--   ranked = 1;
+# -------------------------- Q7 --------------------------
+-- WITH comment_count AS (SELECT user_id, count(id) AS total_comment FROM comments GROUP BY user_id) SELECT
+--   u.full_name,
+--   cc.total_comment AS comment_count,
+--   COUNT(DISTINCT o.id) AS order_count,
+--   SUM(oi.total_purchase) AS total_spend,
+--   SUM(oi.total_purchase) / COUNT(DISTINCT o.id) AS avg_spend
+-- FROM
+--   users u
+--   JOIN orders o ON o.user_id = u.id
+--   JOIN order_items oi ON oi.order_id = o.id
+--   LEFT JOIN comment_count cc ON cc.user_id = u.id
+-- WHERE
+--   o.order_date >= '2026-01-01'
+--   AND o.order_date < '2026-02-01'
+-- GROUP BY
+--   u.id,
+--   u.full_name
+-- ORDER BY
+--   total_spend DESC;
+# -------------------------- Q8 --------------------------
+## Using IS NULL
+-- SELECT
+--   p.id,
+--   p.`name`,
+--   p.current_price,
+--   p.category
+-- FROM
+--   products p
+--   LEFT JOIN order_items oi ON oi.product_id = p.id
+-- WHERE
+--   oi.product_id IS NULL
+## Using NOT IN
+-- SELECT
+--   p.id,
+--   p.`name`,
+--   p.current_price,
+--   p.category
+-- FROM
+--   products p
+-- WHERE
+--   p.id NOT IN (SELECT product_id FROM order_items)
+## Using NOT EXISTS
+-- SELECT
+--   p.id,
+--   p.`name`,
+--   p.current_price,
+--   p.category
+-- FROM
+--   products p
+-- WHERE
+--   NOT EXISTS (SELECT oi.product_id FROM order_items oi WHERE oi.product_id = p.id)
+# -------------------------- Q9 --------------------------
+-- SELECT
+--   MONTH(o.order_date) AS `month`,
+--   YEAR(o.order_date) AS `year`,
+--   SUM(oi.total_purchase) AS total_income,
+--   COUNT(DISTINCT o.id) AS order_count,
+--   SUM(oi.total_purchase) / COUNT(DISTINCT o.id) AS avg_order_value
+-- FROM
+--   orders o
+--   JOIN order_items oi ON oi.order_id = o.id
+-- GROUP BY
+--   `month`,
+--   `year`
+-- ORDER BY
+--   `year` DESC,
+--   `month` DESC;
+# -------------------------- Q10 --------------------------
+-- SELECT
+--   u.full_name,
+--   COUNT(DISTINCT o.id) AS order_count,
+--   SUM(oi.total_purchase) AS total_spend
+-- FROM
+--   users u
+--   JOIN orders o ON o.user_id = u.id
+--   JOIN order_items oi ON oi.order_id = o.id
+-- WHERE
+--   o.order_date >= '2026-01-01'
+--   AND o.order_date < '2026-02-01'
+-- GROUP BY
+--   u.id,
+--   u.full_name
+-- HAVING
+--   order_count >= 2
+--   AND total_spend >= 30000000;
