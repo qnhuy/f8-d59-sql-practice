@@ -7,7 +7,7 @@
 -- SELECT
 --   u.id,
 --   u.username,
---   oi.current_price AS total_pay
+--   SUM(oi.current_price) AS total_pay
 -- FROM
 --   order_items oi
 --   JOIN orders o ON o.id = oi.order_id
@@ -16,6 +16,9 @@
 --   o.order_date >= '2026-01-01'
 --   AND o.order_date < '2026-02-01'
 --   AND o.`status` = 'completed'
+-- GROUP BY
+--   u.id,
+--   u.username
 -- ORDER BY
 --   total_pay DESC
 --   LIMIT 5;
@@ -60,6 +63,12 @@
 --       users u2
 --       JOIN orders o2 ON o2.user_id = u2.id
 --       JOIN order_items oi2 ON oi2.order_id = o2.id
+--     WHERE
+--       o2.order_date >= '2026-01-01'
+--       AND o2.order_date < '2026-02-01'
+--       AND o2.STATUS = 'completed'
+--     GROUP BY
+--       u2.id
 --   ) AS avg_spend
 -- FROM
 --   users u
@@ -96,7 +105,7 @@
 # -------------------------- Q7 --------------------------
 -- WITH comment_count AS (SELECT user_id, count(id) AS total_comment FROM comments GROUP BY user_id) SELECT
 --   u.full_name,
---   cc.total_comment AS comment_count,
+--   COALESCE(cc.total_comment, 0) AS comment_count,
 --   COUNT(DISTINCT o.id) AS order_count,
 --   SUM(oi.total_purchase) AS total_spend,
 --   SUM(oi.total_purchase) / COUNT(DISTINCT o.id) AS avg_spend
@@ -155,6 +164,8 @@
 -- FROM
 --   orders o
 --   JOIN order_items oi ON oi.order_id = o.id
+-- WHERE
+--   o.STATUS = 'completed'
 -- GROUP BY
 --   `month`,
 --   `year`
